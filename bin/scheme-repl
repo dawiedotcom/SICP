@@ -1,0 +1,5 @@
+#!/bin/sh
+breakchars="[]'\`\"()"
+rlwrap -rcb "$breakchars" -f "$HOME"/.r5rs_completions scheme
+
+
