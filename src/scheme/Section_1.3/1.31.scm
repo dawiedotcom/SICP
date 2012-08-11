@@ -8,8 +8,8 @@
   ;; Almost exactly the same as sum, but with
   ;; * instead of +
   (define (iter a result)
-	(if (> a b) result
-	    (iter (next a) (* result (term a)))))
+    (if (> a b) result
+        (iter (next a) (* result (term a)))))
   (iter a 1))
 
 (define (identity x) x)
@@ -30,8 +30,8 @@
   ;; using John Willis' formula.
   (define (pi-term n)
 	; Group 4 numbers into a term, i.e. for n=1: (2.4)/(3.3), etc
-	(define n2 (* 2 n))
-	(exact->inexact (* n2 (+ 2 n2) (/ 1 (square (+ n2 1))))))
+    (define n2 (* 2 n))
+    (exact->inexact (* n2 (+ 2 n2) (/ 1 (square (+ n2 1))))))
   (product pi-term 1 inc m))
 
 ;;; Print a few approximations to pi

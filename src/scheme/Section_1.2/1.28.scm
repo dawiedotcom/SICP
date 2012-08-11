@@ -2,7 +2,8 @@
 ; 	Dawie de Klerk
 ; 	2012-08-09
 
-;(load "../utils.scm")
+(load "../utils.scm")
+
 (define (square x) (* x x))
 (define (expmod base exp m)
   (cond ((zero? exp) 1)
@@ -24,17 +25,18 @@
 
 (define (fast-prime? n)
   (define (fp a)
-	(display a)
-	(cond ((> a (/ n 2)) #t)
+	  ;(display a)
+	  (cond ((> a (/ n 2)) #t)
           ((miller-rabin-test n a) (fp (+ a 1)))
           (else #f)))
-  (fp 1))
+  (if (= n 1) #f
+      (fp 1)))
 
-(define println
-  ;; Print followed by a newline.
-  (lambda args 
-	(apply print args)
-	(newline)))
+;(define println
+;  ;; Print followed by a newline.
+;  (lambda args 
+;	(apply print args)
+;	(newline)))
 
 (println "")
 (println "Testing some composits")
