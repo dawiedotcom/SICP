@@ -23,4 +23,5 @@
         (apply -> (cons ((car funcs) val) 
 						(cdr funcs))))))
 
-
+(define (inc a) (+ a 1))
+(define (dec a) (- a 1))
