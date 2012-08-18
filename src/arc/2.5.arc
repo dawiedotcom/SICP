@@ -11,7 +11,7 @@
         (iter (/ x factor) (inc c))))
   (iter n 0))
 
-;;; New cons, car and cdr
+;;; New cons, car and cdr for positive integers.
 
 (def conss (a b)
   (* (expt 2 a) (expt 3 b)))
