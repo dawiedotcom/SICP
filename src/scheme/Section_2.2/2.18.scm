@@ -1,4 +1,4 @@
-; SICP Exercise 2.17
+; SICP Exercise 2.18
 ;   Dawie de Klerk
 ;   2012-08-20
 
