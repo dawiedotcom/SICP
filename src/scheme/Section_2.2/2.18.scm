@@ -9,12 +9,12 @@
   (define (iter acc l)
     (if (zero? (length l))
         acc
-        (iter (append acc (list (car l))) (cdr l))))
+        (iter (cons (car l) acc) (cdr l))))
   (iter '() lst))
 
-(define (last-reverse2 lst)
+(define (reverse2 lst)
   ;; Reverse the order of list using fold
-  (fold (lambda (elem acc) (append acc (list elem))) 
+  (fold (lambda (elem acc) (cons elem acc)) 
         '() 
         lst))
 

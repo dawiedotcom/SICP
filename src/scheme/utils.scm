@@ -55,3 +55,9 @@
          (list f)
          lists)))
 
+(define-syntax print-eval 
+  ;; Prints a form, then evaluates and prints the result
+  (syntax-rules () 
+    ((_ e) (begin 
+             (println (quote e))
+             (println ";=" e)))))
