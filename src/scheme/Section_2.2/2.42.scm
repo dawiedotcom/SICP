@@ -1,6 +1,6 @@
 ; SICP Exercise 2.42
 ;   Dawie de Klerk
-;   2012-09-01
+;   2012-09-02
 
 (define (enumerate-interval low high)
   (if (> low high) 
@@ -62,6 +62,7 @@
       (= qy oy)
       (= (abs (- qx ox)) (abs (- qy oy))))))
 
+;;; Debug
 (define (print-sol board)
   (let ((board-size (apply max (map col board))))
     (define (print-row pos)
