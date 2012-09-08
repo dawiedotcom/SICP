@@ -57,7 +57,7 @@
       (caddr s)
       (cons '+ (cddr s))))
 
-;;; Products -- Using two arguments in infix notation
+;;; Sums -- Using two arguments in infix notation
 (define (make-sum a1 a2)
   (cond ((=number? a1 0) a2)
         ((=number? a2 0) a1)
@@ -74,6 +74,38 @@
 (define (augend s)
   (caddr s))
 
+;;; Sums -- Using arbitrary number arguments in infix notation
+;;;   The problem here is with the order in which operations 
+;;;   are given. Sums should always be differentiated first 
+;;;   (fortunately they are in deriv), but our selectors and
+;;;   predicates should be aware of this. For instance in
+;;;   (3 * x + 4), we should differentiate the summation first and
+;;;   then the product. Therefore it is no longer sufficient to
+;;;   check if the second element is the symbol +. A sum is any
+;;;   list containing the symbol +. The addend is everything before
+;;;   + and the augend everything after.
+(define (term? sym expr)
+  (and (pair? expr)
+       (pair? (memq sym expr))))
+(define (before sym s)
+  (let ((head (list-head s
+                        (- (length s)
+                           (length (memq sym s))))))
+    (if (null? (cdr head))
+        (car head)
+        head)))
+(define (after sym s)
+  (let ((items (memq sym s)))
+    (if (null? (cddr items))
+        (cadr items)
+        (cdr items))))
+
+(define (sum? s)
+  (term? '+ s))
+(define (addend s)
+  (before '+ s))
+(define (augend s)
+  (after '+ s))
 ;;; Products -- Using an arbitrary number of arguments in prefix notation
 (define (make-product m1 m2)
   (cond ((or (=number? m1 0) 
@@ -116,19 +148,32 @@
 (define (multiplier p)
   (car p))
 (define (multiplicand p)
+  ;; For two term infix
   (caddr p))
+(define (multiplicand p)
+  (if (null? (cdddr p))
+      (caddr p)
+      (cddr p)))
+
+;;; Products -- Using aribtrary number arguments in infix notation
+(define (product? s)
+  (term? '* s))
+(define (multipler s)
+  (before '* s))
+(define (multiplicand s)
+  (after '* s))
 
 ;;; Exponentiation
 (define (make-exponentiation base exponent)
   (cond ((=number? exponent 0) 1)
         ((=number? exponent 1) base)
         (else 
-          (list '** base exponent))))
+          (list base '** exponent))))
 (define (exponentiation? e)
   (and (pair? e)
-       (eq? (car e) '**)))
+       (eq? (cadr e) '**)))
 (define (base ex)
-  (cadr ex))
+  (car ex))
 (define (exponent ex)
   (caddr ex))
 
@@ -168,4 +213,9 @@
   (print-eval (deriv '(* (* x y) (+ x 3)) 'x))
   (print-eval (deriv '(** x 3) 'x))
   (print-eval (deriv '(** (* x y) 2) 'x))
-  (print-eval (to-infix (deriv '(+ (** x 2) (** x 3) (** x 4)) 'x))))
+  (print-eval (prefix->infix (deriv '(+ (** x 2) (** x 3) (** x 4)) 'x))))
+
+(define (do-infix-examples)
+  (print-eval (deriv '(x * 3 + 5 * (x + y + 2)) 'x))
+  (print-eval (deriv '(x + 3 * (x + y + 2)) 'x))
+  (print-eval (deriv '(4 * x ** 3 + 2 * x ** 2 + 3 * x) 'x)))
