@@ -102,13 +102,13 @@
 
 
 ;;; Exercise 2.65 -- The conversion between ordered lists and trees
-;;;     suggest to use the following stradigy
+;;;     suggest to use the following strategy
 ;;;       (list->tree (<list-op> (tree->list s1) (tree->list s2)))
 ;;;     Since the order of the combined operation will be the order
 ;;;     of the most expensive operation, which is O(n) in both cases,
 ;;;     both union-set and intersection-set will be O(n) too.
 
-(define (set-opperation proc set1 set2)
+(define (set-operation proc set1 set2)
   (list->tree (proc (tree->list-2 set1)
                     (tree->list-2 set2))))
 
@@ -127,23 +127,38 @@
            (cons (car l1)
                  (list-union (cdr l1) (cdr l2))))))
 
-  (set-opperation list-union set1 set2))
+  (set-operation list-union set1 set2))
     
 (define (intersection-set set1 set2)
-  (define (list-intersection set1 set2)
+  (define (list-intersection s1 s2)
     ; intersection-set on ordered lists form the previous section
-    (if (or (null? set1)
-            (null? set2))
+    (if (or (null? s1)
+            (null? s2))
         '()
-        (let ((x1 (car set1))
-              (x2 (car set2)))
+        (let ((x1 (car s1))
+              (x2 (car s2)))
           (cond ((= x1 x2)
                  (cons x1
-                       (intersection-set (cdr set1)
-                                         (cdr set2))))
+                       (list-intersection (cdr s1)
+                                         (cdr s2))))
                 ((< x1 x2)
-                 (intersection-set (cdr set1) set2))
+                 (list-intersection (cdr s1) s2))
                 ((< x2 x1)
-                 (intersection-set set1 (cdr set2))))))) 
+                 (list-intersection s1 (cdr s2))))))) 
 
-  (set-opperation list-intersection set1 set2))
+  (set-operation list-intersection set1 set2))
+
+;;; Run some examples
+(define (do-examples)
+  (print-eval (tree->list-1 (intersection-set 
+                (list->tree '(6 7 8)) 
+                (list->tree '(1 4)))))
+  (print-eval (tree->list-1 (intersection-set 
+                (list->tree '(6 7 8 10)) 
+                (list->tree '(4 5 7 10)))))
+  (print-eval (tree->list-1 (union-set 
+                (list->tree '( 6 7 8)) 
+                (list->tree '(1 2 3 4 5)))))
+  (print-eval (tree->list-1 (union-set 
+                (list->tree '(6 7 8)) 
+                (list->tree '(4 5 6))))))
