@@ -94,12 +94,28 @@
   (put 'deriv '** deriv-exponent)
   'done)
 
-;(define (intstall-deriv-trig-package)
+;(define (install-deriv-trig-package)
+
+;  (define (make-sin x)
+;    (list 'sin x))
+;  (define (make-cos x)
+;    (list 'cos x))
+;  (define (argument exp)
+;    (car exp))
 
 ;  (define (deriv-sin exp var)
+;    (make-product
+;      (deriv (argument exp) var)
+;      (make-cos (argument exp))))
+
+;  (define (deriv-cos exp var)
+;    (make-product
+;      (deriv (argument exp) var)
+;      (make-sin (argument exp))))
 
 ;  (put 'deriv 'sin deriv-sin)
 ;  (put 'deriv 'cos deriv-cos)
 ;  'done)
 
 (install-deriv-package)
+;(install-deriv-trig-package)
