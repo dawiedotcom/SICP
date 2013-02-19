@@ -129,6 +129,15 @@
                             (add-streams (stream-cdr fibs)
                                          fibs))))
 
+(define (take-stream s n)
+  ;; Returns a stream containing the first n elements 
+  ;; of a stream
+  (if (zero? n)
+      the-empty-stream
+      (cons-stream (stream-car s) 
+                   (take-stream (stream-cdr s) (- n 1)))))
+
+
 ;;; Exercise 3.54
 
 (define (mul-streams s1 s2)
@@ -139,3 +148,10 @@
   ;; Calculates the stream of factorials such that 
   ;; (stream-ref factorials n) is n!
   (cons-stream 1 (mul-streams integers factorials)))
+
+;;; Exercise 3.55
+
+(define (partial-sums s)
+  (cons-stream (stream-car s)
+               (add-streams (stream-cdr s)
+                            (partial-sums s))))
