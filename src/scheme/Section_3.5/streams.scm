@@ -4,11 +4,22 @@
 
 (load "../utils.scm")
 
+;;; Section 3.51
+
 (define the-empty-stream '())
 (define stream-null? null?)
 (define (stream-car stream) (car stream))
 (define (stream-cdr stream) (force (cdr stream)))
-(define (cons-stream a b) (cons a (delay b)))
+;(define (cons-stream a b) (cons a (delay b)))
+;
+(define-syntax cons-stream
+  ;; A function 
+  (syntax-rules ()
+    ((cons-stream a b)
+     (cons a (delay b)))))
+
+;(define-macro (cons-stream a b)
+;  `(cons ,a (delay ,b)))
 
 ;(delay 
 
@@ -87,7 +98,7 @@
   (let ((sum 0))
     (define (accum x)
       (set! sum (+ x sum))
-      ;(println "ACCUM - sum=" sum)
+      (println "ACCUM - sum=" sum)
       sum)
     (let* ((seq (stream-map accum (stream-enumerate-interval 1 20)))
            (y (stream-filter even? seq))
@@ -96,3 +107,35 @@
       (print-eval (stream-ref y 7))
       (display-stream z))))
 
+;;; Section 3.5.2
+
+(define (integers-starting-from n)
+  (cons-stream n (integers-starting-from (+ n 1))))
+
+(define integers (integers-starting-from 1))
+
+(define (divisible? x y) (zero? (remainder x y)))
+(define no-sevens
+  (stream-filter (lambda (x) (not (divisible? x 7)))
+                 integers))
+
+(define (add-streams s1 s2)
+  (stream-map + s1 s2))
+(define ones (cons-stream 1 ones))
+(define integers (cons-stream 1 (add-streams ones integers)))
+(define fibs
+  (cons-stream 0
+               (cons-stream 1 
+                            (add-streams (stream-cdr fibs)
+                                         fibs))))
+
+;;; Exercise 3.54
+
+(define (mul-streams s1 s2)
+  ;; Produces the element wise product of two streams
+  (stream-map * s1 s2))
+
+(define factorials
+  ;; Calculates the stream of factorials such that 
+  ;; (stream-ref factorials n) is n!
+  (cons-stream 1 (mul-streams integers factorials)))
