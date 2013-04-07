@@ -196,3 +196,45 @@
 
 (define sine-series 
   (cons-stream 0 (integrate-series cosine-series)))
+
+;;; Exercise 3.60
+
+(define (mul-series s1 s2)
+  (cons-stream 
+    (* (stream-car s1) (stream-car s2))
+    (add-streams  
+      (scale-stream (stream-cdr s2) (stream-car s1))
+      (mul-series (stream-cdr s1) s2))))
+
+(define (do-3-60)
+  (let ((one (add-streams (mul-series cosine-series cosine-series)
+                          (mul-series sine-series sine-series))))
+    (display-stream (take-stream one 10))))
+
+;;; Exercise 3.61
+
+(define (invert-unit-series s)
+  (cons-stream 1 (scale-stream 
+                   (mul-series (stream-cdr s) 
+                               (invert-unit-series s))
+                   -1)))
+
+(define (do-3-61)
+  (let ((one (mul-series exp-series (invert-unit-series exp-series))))
+    (display-stream (take-stream one 10))))
+
+;;; Exercise 3.62
+
+(define (div-series s1 s2)
+  (let ((const (stream-car s2)))
+  (if (zero? const)
+      (error "DIV-SERIES: zero constant term" (take-stream s2 10))
+      (scale-stream 
+        (mul-series s1 
+                    (invert-unit-series (scale-stream s2 (/ 1 const))))
+        const))))
+
+(define tangent-series
+  (div-series sine-series
+              cosine-series))
+
