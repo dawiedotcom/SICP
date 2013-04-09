@@ -1,6 +1,6 @@
 ; SICP Section 3.5
 ;   Dawie de Klerk
-;   2012-02-09
+;   2013-02-09
 
 (load "../utils.scm")
 
@@ -238,3 +238,70 @@
   (div-series sine-series
               cosine-series))
 
+;;; Section 3.5.3
+
+(define (average x y)
+  (/ (+ x y) 2))
+(define (sqrt-improve guess x)
+  (average guess (/ x guess)))
+(define (sqrt-stream x)
+  (define guesses
+    (cons-stream 1.
+                 (stream-map (lambda (guess)
+                               (sqrt-improve guess x))
+                             guesses)))
+  guesses)
+
+(define (pi-summands n)
+  (cons-stream (/ 1. n)
+               (stream-map - (pi-summands (+ n 2)))))
+
+(define pi-stream
+  (scale-stream (partial-sums (pi-summands 1)) 4))
+
+(define (euler-transform s)
+  (let ((s0 (stream-ref s 0))
+        (s1 (stream-ref s 1))
+        (s2 (stream-ref s 2)))
+    (cons-stream (- s2 (/ (square (- s2 s1))
+                          (+ s0 (* -2 s1) s2)))
+                 (euler-transform (stream-cdr s)))))
+
+
+(define (make-tableau transform s)
+  (cons-stream s
+               (make-tableau transform
+                             (transform s))))
+
+(define (accelerated-sequenc transform s)
+  (stream-map stream-car
+              (make-tableau transform s)))
+
+(define (do-examples-3-5-3)
+  (print-eval (display-stream (take-stream (sqrt-stream 2) 10)))
+  (print-eval (display-stream (take-stream pi-stream 10)))
+  (print-eval (display-stream (take-stream (euler-transform pi-stream) 10)))
+  (print-eval (display-stream (take-stream (accelerated-sequenc
+                                             euler-transform
+                                             pi-stream)
+                                           10))))
+
+;;; Exercise 3.64
+
+(define (stream-limit s tolerance)
+  (let ((n0 (stream-ref s 0))
+        (n1 (stream-ref s 1)))
+    (if (< (abs (- n0 n1)) tolerance)
+        n1
+        (stream-limit (stream-cdr s) tolerance))))
+
+
+(define (sqrt-tol x tolerance)
+  (stream-limit (sqrt-stream x) tolerance))
+
+(define (do-3-64)
+  (print-eval (sqrt-tol 2. 0.000001))
+  (print-eval (stream-limit pi-stream 0.005))
+  (print-eval (stream-limit (accelerated-sequenc
+                              euler-transform
+                              pi-stream) 0.000000001)))
