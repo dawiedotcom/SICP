@@ -305,3 +305,26 @@
   (print-eval (stream-limit (accelerated-sequenc
                               euler-transform
                               pi-stream) 0.000000001)))
+
+;;; Exercise 3.65
+
+(define ln2-stream
+  (partial-sums (stream-map 
+                  (lambda (x) 
+                    (if (even? x)
+                        (/ -1. x)
+                        (/ 1. x)))
+                  integers)))
+
+
+(define (do-3-65)
+  (println "ln2-stream")
+  (display-stream (take-stream ln2-stream 10))
+  (println "(euler-transform print-eval)")
+  (display-stream (take-stream (euler-transform ln2-stream) 10))
+  (println "(accelerated-sequenc euler-transform ln2-stream)")
+  (display-stream (take-stream (accelerated-sequenc
+                                             euler-transform
+                                             ln2-stream)
+                                           10)))
+
