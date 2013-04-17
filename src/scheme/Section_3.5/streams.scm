@@ -328,3 +328,52 @@
                                              ln2-stream)
                                            10)))
 
+;;; Exercise 3.66
+
+(define (interleave s1 s2)
+  (if (stream-null? s1)
+      s2
+      (cons-stream (stream-car s1)
+                   (interleave s2 (stream-cdr s1)))))
+
+(define (pairs s t)
+  (cons-stream
+    (list (stream-car s) (stream-car t))
+    (interleave
+      (stream-map (lambda (x) (list (stream-car s) x))
+                  (stream-cdr t))
+      (pairs (stream-cdr s)
+             (stream-cdr t)))))
+
+(define (stream-zip s t)
+  (if (or (stream-null? s)
+          (stream-null? t))
+      the-empty-stream
+      (cons-stream (list (stream-car s)
+                         (stream-car t))
+                   (stream-zip
+                     (stream-cdr s)
+                     (stream-cdr t)))))
+
+(define (do-3-66 n)
+  (display-stream (take-stream 
+                    (stream-zip integers (pairs integers integers))
+                    n)))
+
+;;; Exercise 3.73
+
+(define (integral integrand initial-value dt)
+  (define int
+    (cons-stream initial-value
+                 (add-streams (scale-stream integrand dt)
+                              int)))
+  int)
+
+(define (rc r c dt)
+  (lambda (i v0)
+    (add-series 
+      (integrate-series (scale-stream i c)
+                        v0
+                        dt)
+      i)))
+                      
