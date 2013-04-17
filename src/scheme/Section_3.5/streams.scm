@@ -380,8 +380,8 @@
 ;;; Exercise 3.74
 
 (define (sign-change-detector next last)
-  (cond ((and (> next 0) (<= last 0)) 1)
-        ((and (< next 0) (>= last 0)) -1)
+  (cond ((and (>= next 0) (< last 0)) 1)
+        ((and (<= next 0) (> last 0)) -1)
         (else 0)))
 
 (define (make-zero-crossings input-stream last-value)
@@ -398,9 +398,35 @@
   (stream-map sign-change-detector sense-data (cons-stream 0 sense-data)))
 
 (define (do-3-74)
-  (let ((sense-data
-          (stream-enumerate-interval -3 3)))
-    (println "Alyssa")
-    (display-stream (zero-crossings-aph (stream-enumerate-interval -3 3)))
-    (println "Eva")
-    (display-stream (zero-crossings (stream-enumerate-interval -3 3)))))
+  (println "Alyssa")
+  (display-stream (zero-crossings-aph (stream-enumerate-interval -3 3)))
+  (println "Eva")
+  (display-stream (zero-crossings (stream-enumerate-interval -3 3))))
+
+;;; Exercise 3.75
+
+
+(define (make-zero-crossings input-stream last-value last-avpt)
+  (let ((avpt (/ (+ (stream-car input-stream) last-value) 2)))
+    (cons-stream (sign-change-detector avpt last-avpt)
+                 (make-zero-crossings (stream-cdr input-stream)
+                                      (stream-car input-stream)
+                                      avpt))))
+
+;;; Exercise 3.76
+
+(define (smooth input)
+  (scale-stream (add-streams 
+                  input-stream 
+                  (stream-cdr input-stream))
+                2))
+
+(define (make-zero-crossings input-stream transform)
+  (let ((smoothed-input (transform input-stream)))
+    (stream-map
+      sign-change-detector
+      (cons-stream 0 smoothed-input)
+      smoothed-input)))
+
+(define (zero-crossings sense-data)
+  (make-zero-crossings sense-data smooth))
