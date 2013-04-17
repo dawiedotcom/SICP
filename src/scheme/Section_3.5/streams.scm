@@ -376,4 +376,31 @@
                         v0
                         dt)
       i)))
-                      
+                
+;;; Exercise 3.74
+
+(define (sign-change-detector next last)
+  (cond ((and (> next 0) (<= last 0)) 1)
+        ((and (< next 0) (>= last 0)) -1)
+        (else 0)))
+
+(define (make-zero-crossings input-stream last-value)
+  (if (stream-null? input-stream)
+      the-empty-stream
+      (cons-stream 
+        (sign-change-detector (stream-car input-stream) last-value)
+        (make-zero-crossings (stream-cdr input-stream)
+                             (stream-car input-stream)))))
+
+(define (zero-crossings-aph sense-data) (make-zero-crossings sense-data 0))
+
+(define (zero-crossings sense-data)
+  (stream-map sign-change-detector sense-data (cons-stream 0 sense-data)))
+
+(define (do-3-74)
+  (let ((sense-data
+          (stream-enumerate-interval -3 3)))
+    (println "Alyssa")
+    (display-stream (zero-crossings-aph (stream-enumerate-interval -3 3)))
+    (println "Eva")
+    (display-stream (zero-crossings (stream-enumerate-interval -3 3)))))
