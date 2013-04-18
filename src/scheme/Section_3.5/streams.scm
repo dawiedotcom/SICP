@@ -473,3 +473,23 @@
 (define (do-3-78)
   (println
     (stream-ref (solve-2nd 1 1 3 -2 0.001) 1000)))
+
+;;; Exercise 3.79
+
+(define (solve-2nd-gen f y0 dy0 dt)
+  (define y (integral (delay dy) y0 dt))
+  (define dy (integral (delay ddy) dy0 dt))
+  (define ddy (stream-map f dy y))
+  y)
+
+(define (do-3-79)
+  (println
+    (stream-ref
+      (solve-2nd-gen (lambda (dy y) ;dy)
+                       (add-streams
+                         (scale-stream dy 3)
+                         (scale-stream y -2)))
+                     1
+                     1
+                     0.001)
+      1000)))
