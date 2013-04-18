@@ -459,3 +459,17 @@
 (define (do-3-77)
   (println 
     (stream-ref (solve (lambda (y) y) 1 0.001) 1000)))
+
+;;; Exercise 3.78
+
+(define (solve-2nd y0 dy0 a b dt)
+  (define y (integral (delay dy) y0 dt))
+  (define dy (integral (delay ddy) dy0 dt))
+  (define ddy (add-streams
+                (scale-stream dy a)
+                (scale-stream y b)))
+  y)
+
+(define (do-3-78)
+  (println
+    (stream-ref (solve-2nd 1 1 3 -2 0.001) 1000)))
