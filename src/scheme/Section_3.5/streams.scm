@@ -508,33 +508,38 @@
  
 ;;; Section 3.5.5
 
+(define (map-successive-pairs f s)
+  (cons-stream
+    (f (stream-car s) (stream-car (stream-cdr s)))
+    (map-successive-pairs f (stream-cdr (stream-cdr s)))))
+
+(define (monte-carlo experiment-stream passed failed)
+  (define (next passed failed)
+    (cons-stream
+      (/ passed (+ passed failed))
+      (monte-carlo
+        (stream-cdr experiment-stream)
+        passed
+        failed)))
+  (if (stream-car experiment-stream)
+      (next (+ passed 1) failed)
+      (next passed (+ failed 1))))
+
 ;;; Exercise 3.81
+
+(define rand-max (expt 2 32))
 
 (define rand-update 
   ;; A simple implementation of rand-update using a LCG
-  (let ;((a 1664525)
-       ; (c 1013904223)
-       ; (m (expt 2 32)))
-       ((a 15)
-        (c 1)
-        (m 32))
+  (let ((a 1664525)
+        (c 1013904223)
+        (m rand-max))
+       ;((a 15)
+       ; (c 1)
+       ; (m 32))
     (lambda (x)
       (remainder (+ (* x a) c) m))))
 
-;(define random-numbers
-; (cons-stream random-init
-;              (stream-map rand-update random-numbers)))
-(define (stream-zip f s1 s2)
-  (if (or (stream-null? s1)
-          (stream-null? s2))
-      the-empty-stream
-      (stream-cons
-        (f (stream-car s1)
-           (stream-car s2))
-        (stream-zip
-          f
-          (stream-cdr s1)
-          (stream-cdr s2)))))
 
 (define (random-numbers init command-stream)
   (define (next-number command x)
@@ -556,8 +561,6 @@
       the-empty-stream
       (cons-stream (car l) (list->stream (cdr l)))))
 
-;(define (generate s)
-;  (
 (define (do-3-81)
   (define test-stream
     (list->stream (list
@@ -570,3 +573,42 @@
                     'generate)))
   (display-stream test-stream)
   (display-stream (random-numbers 10 test-stream)))
+
+;;; Exercise 3.82
+
+(define (scale-rand x)
+  (/ (exact->inexact x) rand-max))
+(define (rand-in-range r low high)
+  (+ low (* (scale-rand r) 
+            (- high low))))
+
+(define (estimate-integral p x1 x2 y1 y2)
+  (let* ((dx (- x2 x1))
+         (dy (- y2 y1))
+         (area (* dx dy)))
+    (scale-stream
+      (monte-carlo
+        (map-successive-pairs 
+          (lambda (x y) (p (rand-in-range x x1 x2)
+                           (rand-in-range y y1 y2)))
+          (random-numbers 0 always-generate))
+        0 0)
+      (exact->inexact area))))
+
+(define always-generate
+  (cons-stream 'generate always-generate))
+
+(define (do-3-82)
+  (define pi-stream
+    (estimate-integral 
+      (lambda (x y)
+        (< (sqrt (+ (square x) (square y))) 1))
+      -1. 1. 
+      -1. 1.))
+  (println "With 100 trials" (stream-ref pi-stream 100))
+  (println "With 300 trials" (stream-ref pi-stream 300))
+  (println "With 1000 trials" (stream-ref pi-stream 1000))
+  (println "With 3000 trials" (stream-ref pi-stream 3000))
+  (println "With 10000 trials" (stream-ref pi-stream 10000))
+  (println "With 30000 trials" (stream-ref pi-stream 30000))
+  (println "With 100000 trials" (stream-ref pi-stream 100000)))
