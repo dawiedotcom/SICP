@@ -505,4 +505,68 @@
     (define dvc (scale-stream il (- (/ 1 c))))
     (cons vc il))
   result)
-  
+ 
+;;; Section 3.5.5
+
+;;; Exercise 3.81
+
+(define rand-update 
+  ;; A simple implementation of rand-update using a LCG
+  (let ;((a 1664525)
+       ; (c 1013904223)
+       ; (m (expt 2 32)))
+       ((a 15)
+        (c 1)
+        (m 32))
+    (lambda (x)
+      (remainder (+ (* x a) c) m))))
+
+;(define random-numbers
+; (cons-stream random-init
+;              (stream-map rand-update random-numbers)))
+(define (stream-zip f s1 s2)
+  (if (or (stream-null? s1)
+          (stream-null? s2))
+      the-empty-stream
+      (stream-cons
+        (f (stream-car s1)
+           (stream-car s2))
+        (stream-zip
+          f
+          (stream-cdr s1)
+          (stream-cdr s2)))))
+
+(define (random-numbers init command-stream)
+  (define (next-number command x)
+    (cond ((eq? command 'generate)
+           (rand-update x))
+          ((and (pair? command)
+                (eq? (car command)
+                     'reset))
+           (cdr command))
+          (else (error "RANDOM-NUMBERS -- Bad command" command))))
+
+  (define generated-stream
+    (cons-stream init
+                 (stream-map next-number command-stream generated-stream)))
+  generated-stream)
+
+(define (list->stream l) 
+  (if (null? l)
+      the-empty-stream
+      (cons-stream (car l) (list->stream (cdr l)))))
+
+;(define (generate s)
+;  (
+(define (do-3-81)
+  (define test-stream
+    (list->stream (list
+                    'generate
+                    'generate
+                    'generate
+                    (cons 'reset 10)
+                    'generate
+                    'generate
+                    'generate)))
+  (display-stream test-stream)
+  (display-stream (random-numbers 10 test-stream)))
