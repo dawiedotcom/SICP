@@ -56,3 +56,47 @@
       (let ((first (eval (first-operand exps) env)))
         (cons first
               (list-of-values (rest-operands exps) env)))))
+
+;;; Exercise 4.2
+
+;; a) Procedure application is represented by a list. Most other
+;;    expression types are represented by tagged lists,  
+;;    definitions in particular. So any expression represented
+;;    as a tagged must be tested for before procedure application
+;;    to prevent them from being interpreted as procedure applications. 
+;;    Something like (define x 3) will be interpreted as apply the 
+;;    procedure DEFINE on arguments x and 3.
+
+;; b) We can implement Louis's plan by representing application by 
+;;    the tagged list (call proc args)
+
+(define (do-4-2)
+  (define (eval exp env)
+    (cond ((self-evaluating? exp) exp)
+          ((application? exp)
+           (apply (eval (operator exp) env)
+                  (list-of-values (operands exp) env)))
+          ((variable? exp)
+           (lookup-variable-value exp env))
+          ((quoted? exp) (text-of-quotation exp))
+          ((assignment? exp) (eval-assignment exp env))
+          ((definition? exp) (eval-definition exp env))
+          ((if? exp) (eval-if exp env))
+          ((lambda? exp)
+           (make-procedure (lambda-parameters exp)
+                           (lambda-body exp)
+                           env))
+          ((begin? exp)
+           (eval-sequence (begin-actions exp) env))
+          ((cond? exp) (eval (cond->if exp) env))
+          (else
+            (error "EVAL - Unknown expression type" exp))))
+  (define (application? exp)
+    (tagged-list? exp 'call))
+  (define (operator exp)
+    (cadr exp))
+  (define (operands exp)
+    (cddr exp))
+  (eval '(call car '(1 2 3))
+        the-global-environment))
+
