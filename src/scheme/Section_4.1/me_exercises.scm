@@ -105,30 +105,6 @@
 
 ;;; Exercise 4.4
 
-(define (do-4-4)
-  (define (test-all exprs)
-    (if (not (null? exprs))
-        (let ((e (car exprs))) 
-          (display (eq? (eval-in-underlying-scheme 
-                          e 
-                          user-initial-environment)
-                        (eval e the-global-environment)))
-          (display " ")
-          (display e)
-          (display " => ")
-          (display (eval e the-global-environment))
-          (newline)
-          (test-all (cdr exprs)))))
-  (let ((tests
-          (list 
-            '(or true (display "hi"))
-            '(or (+ 1 2) (+ 100 100))
-            '(and true (+ 1 2))
-            '(or)
-            '(and))))
-    (test-all tests)))
-
-
 ;; OR expressions
 (define (or? exp) (tagged-list? exp 'or))
 (define (or-actions exp) (cdr exp))
@@ -158,6 +134,71 @@
               ((last-action? actions) res)
               (else
                 (eval-and-actions (cdr actions) env))))))
+
+;;; Exercise 4.5
+
+(define (special-cond-clause? clause)
+  (tagged-list? (cond-actions clause) '=>))
+(define (cond-recipient clause)
+  (caddr clause))
+
+(define (expand-clauses clauses)
+  ;; Converts a list of cond clauses to a set of nested IF
+  ;; expressions.
+  (if (null? clauses)
+      'false                      ; cond with no ELSE clause
+      (let ((first (car clauses))
+            (rest (cdr clauses)))
+        (cond ((cond-else-clause? first)
+               ; The ELSE clause. Should always be last and
+               ; therefore expand to an IF expression's 
+               ; alternative. The corner case
+               ; (cond ((else ..))) will be a nop.
+               (if (null? rest)
+                   (sequence->exp (cond-actions first))
+                   (error "COND->IF -- ELSE clause isn't last" 
+                          clauses)))
+
+              ((special-cond-clause? first)
+               ; Handle the special cond clauses
+               (make-if (cond-predicate first)
+                        (list 
+                          (cond-recipient first)
+                          (cond-predicate first))
+                        (expand-clauses rest)))
+
+              (else
+               ; Normal clauses - make an IF expression with
+               ; the other clauses recursivly in the alternative.
+               (make-if (cond-predicate first)
+                        (sequence->exp (cond-actions first))
+                        (expand-clauses rest)))))))
+
+(define (compare-eval)
+  (define (test-all exprs)
+    (if (not (null? exprs))
+        (let ((e (car exprs))) 
+          (display (eq? (eval-in-underlying-scheme 
+                          e 
+                          user-initial-environment)
+                        (eval e the-global-environment)))
+          (display " ")
+          (display e)
+          (display " => ")
+          (display (eval e the-global-environment))
+          (newline)
+          (test-all (cdr exprs)))))
+  (let ((tests
+          (list 
+            '(or true (display "hi"))
+            '(or (+ 1 2) (+ 100 100))
+            '(and true (+ 1 2))
+            '(or)
+            '(and)
+            '(cond ((assoc 'b '((a 1) (b 2))) => cadr) 
+                   (else false))
+            )))
+    (test-all tests)))
 
 (define (eval exp env)
   (cond ((self-evaluating? exp) exp)
