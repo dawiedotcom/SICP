@@ -31,7 +31,7 @@
                  the-empty-environment)))
 
       (eval '(eq? (list 1) (list 2))
-                     env)
+            env)
 
       ;(display fake-list-args) (newline)
       (if (= (caar fake-list-args) 1)
@@ -72,6 +72,7 @@
 
 (define (do-4-2)
   (define (eval exp env)
+    ;; The new eval that checks for application much earlier
     (cond ((self-evaluating? exp) exp)
           ((application? exp)
            (apply (eval (operator exp) env)
@@ -91,12 +92,95 @@
           ((cond? exp) (eval (cond->if exp) env))
           (else
             (error "EVAL - Unknown expression type" exp))))
+  ;; The new abstraction for application
   (define (application? exp)
     (tagged-list? exp 'call))
   (define (operator exp)
     (cadr exp))
   (define (operands exp)
     (cddr exp))
+  ;; Testing
   (eval '(call car '(1 2 3))
         the-global-environment))
+
+;;; Exercise 4.4
+
+(define (do-4-4)
+  (define (test-all exprs)
+    (if (not (null? exprs))
+        (let ((e (car exprs))) 
+          (display (eq? (eval-in-underlying-scheme 
+                          e 
+                          user-initial-environment)
+                        (eval e the-global-environment)))
+          (display " ")
+          (display e)
+          (display " => ")
+          (display (eval e the-global-environment))
+          (newline)
+          (test-all (cdr exprs)))))
+  (let ((tests
+          (list 
+            '(or true (display "hi"))
+            '(or (+ 1 2) (+ 100 100))
+            '(and true (+ 1 2))
+            '(or)
+            '(and))))
+    (test-all tests)))
+
+
+;; OR expressions
+(define (or? exp) (tagged-list? exp 'or))
+(define (or-actions exp) (cdr exp))
+(define (eval-or exp env) (eval-or-actions (or-actions exp) env))
+
+(define (eval-or-actions actions env)
+  ;; Eval each of the or actions according to the rules of OR.
+  (if (null? actions)
+      false
+      (let ((res (eval (car actions) env)))
+        (if (true? res)
+            res
+            (eval-or-actions (cdr actions) env)))))
+
+;; AND expressions
+(define (and? exp) (tagged-list? exp 'and))
+(define (and-actions exp) (cdr exp))
+(define (eval-and exp env) (eval-and-actions (and-actions exp) env))
+(define (last-action? actions) (null? (cdr actions)))
+
+(define (eval-and-actions actions env)
+  ;; Eval each of the or actions according to the rules of AND.
+  (if (null? actions)
+      true
+      (let ((res (eval (car actions) env)))
+        (cond ((false? res) 'false)
+              ((last-action? actions) res)
+              (else
+                (eval-and-actions (cdr actions) env))))))
+
+(define (eval exp env)
+  (cond ((self-evaluating? exp) exp)
+        ((variable? exp)
+         (lookup-variable-value exp env))
+        ((quoted? exp) (text-of-quotation exp))
+        ((assignment? exp) (eval-assignment exp env))
+        ((definition? exp) (eval-definition exp env))
+        ((if? exp) (eval-if exp env))
+        ((lambda? exp)
+         (make-procedure (lambda-parameters exp)
+                         (lambda-body exp)
+                         env))
+        ((begin? exp)
+         (eval-sequence (begin-actions exp) env))
+        ((or? exp) (eval-or exp env))
+        ((and? exp) (eval-and exp env))
+        ((cond? exp) (eval (cond->if exp) env))
+        ((application? exp)
+         (apply (eval (operator exp) env)
+                (list-of-values (operands exp) env)))
+        (else
+          (error "EVAL - Unknown expression type" exp))))
+
+  
 
