@@ -194,6 +194,38 @@
     (make-lambda vars (list body))
     exprs))
 
+;;; Exercise 4.7
+
+;; We can expand 
+;;   (let* ((x 3)
+;;          (y (+ x 2))
+;;          (z (+ x y 5)))
+;;     (* x z))
+;; to
+;;   (let ((x 3))
+;;     (let ((y (+ x 2)))
+;;       (let ((z (+ x y 5)))
+;;         (* x z))))
+
+;(define (let*-first-var clauses) (caar clauses))
+;(define (let*-first-exp clauses) (cadar clauses))
+(define (let*? exp) (tagged-list? exp 'let*))
+(define (let*->nested-lets exp)
+    (expand-let* (let-clauses exp)
+                 (let-body exp)))
+
+(define (expand-let* clauses body)
+  (if (null? clauses)
+      body
+      (let ((first (list (car clauses)))
+            (rest (cdr clauses)))
+        (expand-let
+          (let-variables first)
+          (let-exprs first)
+          (expand-let* rest body)))))
+
+
+
 ;;; Eval with all the new syntax expressions
 
 (define (compare-eval)
@@ -221,6 +253,8 @@
                    (else false))
             '(let ((x 2)) x)
             '(let ((x 2) (y 3)) (+ 2 3))
+            '(let* ((x 3) (y (- x 2))) (* x y))
+            '(let* ((x 3) (y (+ x 2)) (z (+ x y 5))) (* x z))
             )))
     (test-all tests)))
 
@@ -241,6 +275,7 @@
         ((or? exp) (eval-or exp env))
         ((and? exp) (eval-and exp env))
         ((let? exp) (eval (let->combination exp) env))
+        ((let*? exp) (eval (let*->nested-lets exp) env))
         ((cond? exp) (eval (cond->if exp) env))
         ((application? exp)
          (apply (eval (operator exp) env)
