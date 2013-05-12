@@ -174,6 +174,28 @@
                         (sequence->exp (cond-actions first))
                         (expand-clauses rest)))))))
 
+;;; Exercise 4.6
+
+(define (let? exp) (tagged-list? exp 'let))
+(define (let-clauses exp) (cadr exp))
+(define (let-body exp) (caddr exp))
+(define (let-variables clauses) (map car clauses))
+(define (let-exprs clauses) (map cadr clauses))
+
+(define (let->combination exp)
+  (let ((clauses (let-clauses exp)))
+    (expand-let
+      (let-variables clauses)
+      (let-exprs clauses)
+      (let-body exp))))
+
+(define (expand-let vars exprs body)
+  (cons
+    (make-lambda vars (list body))
+    exprs))
+
+;;; Eval with all the new syntax expressions
+
 (define (compare-eval)
   (define (test-all exprs)
     (if (not (null? exprs))
@@ -197,6 +219,8 @@
             '(and)
             '(cond ((assoc 'b '((a 1) (b 2))) => cadr) 
                    (else false))
+            '(let ((x 2)) x)
+            '(let ((x 2) (y 3)) (+ 2 3))
             )))
     (test-all tests)))
 
@@ -216,12 +240,11 @@
          (eval-sequence (begin-actions exp) env))
         ((or? exp) (eval-or exp env))
         ((and? exp) (eval-and exp env))
+        ((let? exp) (eval (let->combination exp) env))
         ((cond? exp) (eval (cond->if exp) env))
         ((application? exp)
          (apply (eval (operator exp) env)
                 (list-of-values (operands exp) env)))
         (else
           (error "EVAL - Unknown expression type" exp))))
-
-  
 
