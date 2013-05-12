@@ -224,7 +224,37 @@
           (let-exprs first)
           (expand-let* rest body)))))
 
+;;; Exercise 4.8
 
+(define (named-let? exp) (not (pair? (cadr exp))))
+(define (named-let-name exp) (cadr exp))
+(define (named-let-clauses exp) (caddr exp))
+(define (named-let-body exp) (cadddr exp))
+
+(define (let->combination exp)
+  (if (named-let? exp)
+      (let ((clauses (named-let-clauses exp)))
+        (expand-named-let
+          (named-let-name exp)
+          (let-variables clauses)
+          (let-exprs clauses)
+          (named-let-body exp)))
+      (let ((clauses (let-clauses exp)))
+        (expand-let
+          (let-variables clauses)
+          (let-exprs clauses)
+          (let-body exp)))))
+
+(define (expand-named-let name vars exprs body)
+  (make-begin
+    (list 
+      (list 'define
+            (cons name vars)
+            body)
+      (cons name exprs))))
+  ;(cons
+  ;  (make-lambda vars (list body))
+  ;  exprs))
 
 ;;; Eval with all the new syntax expressions
 
@@ -255,6 +285,15 @@
             '(let ((x 2) (y 3)) (+ 2 3))
             '(let* ((x 3) (y (- x 2))) (* x y))
             '(let* ((x 3) (y (+ x 2)) (z (+ x y 5))) (* x z))
+            '(begin
+               (define (fib n)
+                 (let fib-iter ((a 1)
+                                (b 0)
+                                (count n))
+                   (if (= count 0)
+                       b
+                       (fib-iter (+ a b) a (- count 1)))))
+               (fib 8))
             )))
     (test-all tests)))
 
