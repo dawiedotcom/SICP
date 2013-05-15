@@ -246,15 +246,75 @@
           (let-body exp)))))
 
 (define (expand-named-let name vars exprs body)
+  (display "expand-named-let\n")
   (make-begin
     (list 
       (list 'define
             (cons name vars)
             body)
       (cons name exprs))))
-  ;(cons
-  ;  (make-lambda vars (list body))
-  ;  exprs))
+
+;;; Exercise 4.11
+;; An alternative representation for frames using hash-tables
+
+(define (make-frame variables values)
+  (let ((frame (make-eq-hash-table 
+                 (* 2 (length variables)))))
+    (map (lambda (var val)
+           (add-binding-to-frame! var val frame ))
+         variables
+         values)
+    frame))
+
+(define (frame-variables frame)
+  (hash-table/key-list frame))
+(define (frame-values frame)
+  (hash-table/datum-list frame))
+(define (add-binding-to-frame! var val frame)
+  (hash-table/put! frame var val))
+
+;;; Exercise 4.12
+
+(define (defined-in-frame? frame var)
+  ;; Is it safe to assume no variable in a frame will 
+  ;; have the frame as its value?
+  (not (equal? (hash-table/get frame var frame) frame)))
+
+(define (set-val-in-frame! var val frame)
+  (hash-table/put! frame var val))
+(define (get-val-in-frame var frame)
+  (hash-table/get frame var #f))
+
+(define (map-environment env var proc)
+  ;; Calls proc with the frame it is defined in
+  (define (map-e e)
+    (if (eq? e the-empty-environment)
+        (error "MAP-ENVIRONMENT -- Unbound variable" var)
+        (let ((frame (first-frame e)))
+          (if (defined-in-frame? frame var)
+              (proc frame)
+              (map-e (enclosing-environment e))))))
+  (map-e env))
+
+(define (lookup-variable-value var env) 
+  (map-environment env 
+                   var
+                   (lambda (frame) 
+                     (get-val-in-frame var frame))))
+
+(define (define-variable! var val env) 
+  (if (eq? env the-empty-environment)
+      (error "DEFINE-VARIABLE! -- cannot define variables in the-empty-environment")
+      (let ((frame (first-frame env)))   
+        (if (defined-in-frame? frame var)
+            (set-variable-value! var val env)
+            (add-binding-to-frame! var val frame)))))
+
+(define (set-variable-value! var val env)
+  (map-environment env 
+                   var
+                   (lambda (frame) 
+                     (set-val-in-frame! var val frame))))
 
 ;;; Eval with all the new syntax expressions
 
