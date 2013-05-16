@@ -316,6 +316,25 @@
                    (lambda (frame) 
                      (set-val-in-frame! var val frame))))
 
+;;; Exercise 4.13
+
+;; New Frame procedures
+(define (remove-binding-from-frame! frame var)
+  (hash-table/remove! frame var))
+
+;; Make-unbound! expression
+(define (make-unbound? exp)
+  (tagged-list? exp 'make-unbound!))
+(define (make-unbound-var exp)
+  (cadr exp))
+
+(define (eval-make-unbound! exp env)
+  (let ((frame (first-frame env))
+        (var (make-unbound-var exp)))
+    (if (defined-in-frame? frame var)
+        (remove-binding-from-frame! frame var)
+        (error "MAKE-UNBOUND! -- var not defined in this frame" var))))
+
 ;;; Eval with all the new syntax expressions
 
 (define (compare-eval)
@@ -371,6 +390,7 @@
                          env))
         ((begin? exp)
          (eval-sequence (begin-actions exp) env))
+        ;((make-unbound? exp) (eval-make-unbound! exp env))
         ((or? exp) (eval-or exp env))
         ((and? exp) (eval-and exp env))
         ((let? exp) (eval (let->combination exp) env))
